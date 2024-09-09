@@ -253,7 +253,6 @@ pdig:   FIM P0, 0
         BBL 0                   ; return from subroutine
 
         ; iaddr: input address with keyboard and display
-*= 0x100
 iaddr:  JMS ckey                ; ckey returns with 0x40 in SRC
         JCN AN iaddr            ; returns 1 if no key pressed
         LDM 6                   ; display to digit 6
@@ -481,7 +480,6 @@ waits3: ISZ 0, waits3   ;                                                35
 waits4: ISZ 0, waits4   ; hold port value for time                       36
         BBL 0           ;                                                37
 
-*= 0x200
         ; ssend: send string, beginning at ADDR SC2..SC0 in RAM chip 1, reg 2
 ssend:  FIM P0, 0x60
         SRC P0
