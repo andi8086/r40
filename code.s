@@ -108,7 +108,7 @@ dump:   JMS paddr
 ndump:  RAR                     ; bit #1 = deposit byte key
         JCN CZ ndep             ; check dep = 4
         ; *********** deposite byte *******
-debkey:	JMS ibyte               ; input byte from keyboard
+debkey: JMS ibyte               ; input byte from keyboard
         JMS wbyte
         JMS rbyte               ; DEBUG: display input byte
         JUN mon
@@ -117,11 +117,11 @@ ndep:   RAR                     ; bit #2 = addr input key
         
         ; *********** input addr ***********
         JMS iaddr               ; input and print addr
-	JUN dump
-	JUN mon
-naddr:  RAR			; bit #3 = GO key
-	JCN CZ mon 		; no other keys left to check
-	; *********** GO key ***************
+        JUN dump
+        JUN mon
+naddr:  RAR                     ; bit #3 = GO key
+        JCN CZ mon              ; no other keys left to check
+        ; *********** GO key ***************
 go:     JUN end_rom
         ; ********************************************************************
         ; END OF INTERRUPT HANDLER
@@ -314,8 +314,8 @@ ckey:   STC                     ; set carry, we want to rotate a TTL 0,
         RAL                     ; carry comes in from the right,
                                 ;       ACC = 0001, CY = 0
 
-	NOP
-	NOP
+        NOP
+        NOP
 ncol:   FIM P0, 0x00
         SRC P0                  ; RAM #0 is enabled
 
@@ -330,11 +330,11 @@ ncol:   FIM P0, 0x00
         CMA                     ; converted to negative logic by CMA, since 4289
                                 ; reads positive logic
         JCN AN gotkey           ; one bit set? got key!
-	XCH 2                   ; restore col
+        XCH 2                   ; restore col
         RAL                     ; next col
         JCN CZ ncol             ; if carry is 1, 0000 is in ACC, and we are done
-	 
-	BBL 1                   ; return error - no key
+         
+        BBL 1                   ; return error - no key
 gotkey: KBP                     ; ACC = 1..4 (the row we read from rom port)
         DAC                     ; ACC = 0..3
         CLC                     ; clear carry
@@ -421,9 +421,24 @@ stest1: FIM P1, @teststr
         JMS ssend       ; print string
         BBL  0
 
-        ; sbyte: write byte to serial port with 1200 baud 1-N-8
+        ; sbyte: write byte to serial port with 2400 baud 1-N-8
         ; scratch regs: R0-R5, A
         ; input byte: RAM chip 0, reg 0, main characters 14 and 15
+        ;
+        ; Timing considerations:
+        ; For a 5.12 MHz crystal, the frequency will be
+        ; 731.4 kHz (the recommended crystal was a 5.18 MHz,
+        ; leading to exactly 740 kHz)
+        ;       (devided by 7, due to 4201 mode 1 (VCC on mode pin))
+        ;  Hence, one machine cycle takes 8 clock cycles, i.e.
+        ; 10.9375 micro seconds (56 / fclk)
+
+        ; One nop will hence take 10.9375 us.
+
+        ; To set a bit we have
+
+        ; for 1200 baud: 76.19 clock cycles per bit
+        ; for 2400 baud: 38.10 clock cycles per bit
 sbyte:  FIM P2, 0x80 ; (4265 on CE-RAM3 has chip ID 2)
         FIM P0, 0x6E ; (RAM chip 1 (R0 = 0 after wait count),
                      ;  register 0, main character [R1 = 14])
@@ -531,7 +546,7 @@ ssend:  FIM P0, 0x60
 szero:  BBL 0
 
 srepeat:JMS stest1
-	JUN srepeat
+        JUN srepeat
 
 *= 0x400
 end_rom:
