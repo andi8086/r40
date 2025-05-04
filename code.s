@@ -313,6 +313,9 @@ ckey:   STC                     ; set carry, we want to rotate a TTL 0,
         LDM 0                   ; begin with ACC = 0000
         RAL                     ; carry comes in from the right,
                                 ;       ACC = 0001, CY = 0
+
+	NOP
+	NOP
 ncol:   FIM P0, 0x00
         SRC P0                  ; RAM #0 is enabled
 
