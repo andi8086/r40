@@ -16,14 +16,17 @@
 ;       4002-1 #0 usage:
 ;                       SRC reg
 ;                       CC RR MMMM
+;                                                       during serial send:
+;                       00 00 1110                      => low nibble of char
+;                       00 00 1111                      => high nibble of char
 ;               Output port:
-;                       00 00 0000      program memory RAM access
+;                       00 xx xxxx      program memory RAM access
 ;                                       address bits 11-8
-;
 ;
 ;       4002-1 #1 usage:
 ;                       SRC reg
 ;                       CC RR MMMM
+;
 ;                       01 00 xxxx      Status 0        => addr bits 0..3
 ;                       01 00 xxxx      Status 1        => addr bits 4..7
 ;                       01 00 xxxx      Status 2        => addr bits 8..11
@@ -31,8 +34,13 @@
 ;                       01 01 xxxx      Status 0        => OPR
 ;                       01 01 xxxx      Status 1        => OPA
 ;
+;                                                       serial send:
+;                       01 10 xxxx      Status 0        => String addr 3..0
+;                       01 10 xxxx      Status 1        => String addr 7..4
+;                       01 10 xxxx      Status 2        => String addr 11..8
+;
 ;               Output port:
-;                       01 00 0000      disable (0), display select (1-6),
+;                       01 xx xxxx      disable (0), display select (1-6),
 ;                                       clear pkeys (7)
 ;
 ;       4289 I/O port:
@@ -114,7 +122,7 @@ debkey: JMS ibyte               ; input byte from keyboard
         JUN mon
 ndep:   RAR                     ; bit #2 = addr input key
         JCN CZ naddr
-        
+
         ; *********** input addr ***********
         JMS iaddr               ; input and print addr
         JUN dump
@@ -171,7 +179,7 @@ init:   FIM P0, 0x40            ; Select 4002-1 chip #1
         JMS paddr
         JMS srcwr
         JMS rbyte
-        JUN mon         ; this will handled by int later ?
+        JUN mon                 ; this will be handled by int later ?
 
         JMS paddr
         JMS srcwr
@@ -485,8 +493,8 @@ bit0:   CLC             ; same as above but adapted hold time   1             34
 
 waits2: ISZ 0, waits2   ; hold port value for time                       19
         NOP
-        ISZ 1, snibb    ; next 4 bits                                    21
-
+        ISZ 1, snibb    ; next 4 bits (R1 gets increased to F here once) 21
+                        ;  if R1 was F already, then we fall through here)
         FIM P0, 0xAE    ;                                                23
 waits3: ISZ 0, waits3   ;                                                35
         NOP             ;                                                36
@@ -515,7 +523,7 @@ ssend:  FIM P0, 0x60
         XCH 4           ; low nibble in R4
         RPM
         XCH 3           ; high nibble in R3
-        LD  3           ; load 3 into A again
+        LD  3           ; load R3 into A again
         OR4             ; or R4, thanks 4040 :)
         JCN AZ szero    ; 0 terminator reached
         FIM P0, 0x0E    ; (RAM chip 0 (R0 = 0 after wait count),
