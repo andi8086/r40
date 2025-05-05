@@ -341,7 +341,7 @@ ncol:   FIM P0, 0x00
         XCH 2                   ; restore col
         RAL                     ; next col
         JCN CZ ncol             ; if carry is 1, 0000 is in ACC, and we are done
-         
+
         BBL 1                   ; return error - no key
 gotkey: KBP                     ; ACC = 1..4 (the row we read from rom port)
         DAC                     ; ACC = 0..3
@@ -352,7 +352,7 @@ gotkey: KBP                     ; ACC = 1..4 (the row we read from rom port)
         KBP
         DAC                     ; ACC = 00CC
         CLC
-        ADD 2                   ; ACC now  RRCC which should equal the pressed key
+        ADD 2                   ; ACC now RRCC which equals the pressed key
         XCH 2                   ; store it into R2
         FIM P0, 0x40
         SRC P0                  ; RAM chip #1 is enabled for display
