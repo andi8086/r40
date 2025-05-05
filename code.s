@@ -148,18 +148,18 @@ kbank:  RAR                     ; shift back
         BBS                     ; return from monitor, will switch back to
                                 ; bank 0
         ; ********************************************************************
-init:   FIM P0, 0x40            ; Select 4002-1 chip #1
+init:   FIM P0, 0x40            ; Select 4002-1 chip #1, register 0
         SRC P0
         LDM ~7                  ; reset PKEYs
         WMP                     ; write to RAM #1 I/O port
         LDM ~0                  ; inactive
         WMP                     ; write to RAM #1 I/O port
 
-        LDM 0 ; for test, start with addr 0x000
-        WR2                     ; store address 0x400
+        LDM 4                   ; start with addr 0x400
+        WR2                     ; store 11..8
         LDM 0
-        WR1
-        WR0
+        WR1                     ; store 7..4
+        WR0                     ; store 3..0
 
         LDM 4
         DCL                     ; enable CM-RAM3
