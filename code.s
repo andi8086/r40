@@ -39,6 +39,10 @@
 ;                       01 10 xxxx      Status 1        => String addr 7..4
 ;                       01 10 xxxx      Status 2        => String addr 11..8
 ;
+;                                                       serial getc:
+;                       01 11 1110                      => low input nibble
+;                       01 11 1111                      => high input nibble
+;
 ;               Output port:
 ;                       01 xx xxxx      disable (0), display select (1-6),
 ;                                       clear pkeys (7)
@@ -556,6 +560,51 @@ szero:  BBL 0
 srepeat:JMS stest1
         JUN srepeat
 
+*= 0x200
+getc:   FIM P1, 0x0D    ; R1 = D = 3 repetitions
+        FIM P3, 0x7E    ; Ram #1, Reg #3, Char #14
+        FIM P2, 0x80    ; for sourcing 4265
+        LDM 4
+        DCL
+        SRC P2
+wstab:  RD1             ; read port X
+        RAR
+        JCN CN wstab    ; loop until we get a 0 (start bit)
+        LDM 0           ;                                               1
+        XCH 0           ;                                               2
+wib0:   ISZ 0, wib0     ; wait 32 cycles                               34
+        LDM 5                                                         ;35
+        XCH 0                                                         ;36
+wib0b:  ISZ 0, wib0b    ; wait 22 cycles                              ;58
+rbit:   RD1                                                           ;1
+        RAR                                                           ;2
+        XCH 5                                                         ;3
+        RAR             ; shift into R5, which was 0 from SRC P2 on   ;4
+        XCH 5                                                         ;5
+        LDM 1                                                         ;6
+        XCH 0                                                         ;7
+rbitw:  ISZ 0, rbitw                                                  ;37
+        ISZ 3, rbit     ; repeat for 3 further bits (complete lnibble);39
+                        ; we lose 1 cycle per loop above, but that doesnt matter
+        LDM 0                                                         ;1
+        DCL                                                           ;2
+        SRC P3                                                        ;3
+        XCH 5                                                         ;4
+        WRM             ; store nibble to character [R7]              ;5
+        LDM 4                                                         ;6
+        DCL                                                           ;7
+        SRC P2                                                        ;8
+        FIM P1, 0x3D    ; reset repeat counter for 4 bits             ;10
+inibw:  ISZ 2, inibw    ; delay                                       ;36
+        ISZ 7, rbit     ; repeat once at rbit for high nibble         ;38
+        LDM 0
+        DCL
+        BBL 0           ; we do not wait for stop bit, to save time
+                        ; be sure to not call this function for at least
+                        ; 57 cycles
+
+readhex:JMS getc
+        BBL 0
+
 *= 0x400
 end_rom:
-
